@@ -10,7 +10,7 @@
  ---------
  Version		Date		Change
  ----------------------------------------------------------------------
-0.86          23.12.2016    Changed sidetone back to 800 Hz and mode default to iambicB  
+ 0.86          23.12.2016    Changed sidetone back to 800 Hz and mode default to iambicB
  
  Todo
  ----
@@ -19,9 +19,7 @@
  *********************************************************************/
 
 // User configurable settings
-
 // The following settings define the hardware connections to the keyer chip
-
 // Definition of where the keyer itself is connected 
 #define		KEYDDR			DDRB
 #define		KEYPORT			PORTB
@@ -45,7 +43,6 @@
 #define		BTNPORT			PORTB
 #define		BTNINP			PINB
 #define		BTNPIN			2
-
 
 // The following defines the meaning of status bits in the yackflags and volflags 
 // global variables
@@ -73,7 +70,6 @@
 #define		DIRTYFLAG		0b00000100  // Set if cfg data was changed and needs storing
 #define     CKLATCH         0b00001000  // Set if the command key was pressed at some point
 #define		VSCOPY          0b00110000  // Copies of Sidetone and TX flags from yackflags
-
 
 // The following defines timing constants. In the default version the keyer is set to operate in
 // 10ms heartbeat intervals. If a higher resolution is required, this can be changed to a faster
@@ -118,7 +114,7 @@
 // is adapted accordingly
 #define		PRESCALE		8
 #define		CTCVAL(n)		((F_CPU/n/2/PRESCALE)-1) // Defines how to compute CTC setting for
-                                                     // a given frequency
+// a given frequency
 
 // Default sidetone frequency
 #define		DEFFREQ			800     // Default sidetone frequency
@@ -152,54 +148,39 @@
 #define		TRUE            1
 #define		FALSE           0
 
-
 // Generic functionality
 #define 	SETBIT(ADDRESS,BIT)     (ADDRESS |= (1<<BIT))
 #define 	CLEARBIT(ADDRESS,BIT)   (ADDRESS &= ~(1<<BIT))
 
-typedef		uint8_t         byte;
-typedef		uint16_t        word;
-
+typedef uint8_t byte;
+typedef uint16_t word;
 
 // Forward declarations of public functions
-void        yackinit (void);
-void        yackchar(char c);
-void        yackstring(const char *p);
-char        yackiambic(byte ctrl);
-void        yackpitch (uint8_t dir);
-void        yacktune (void);
-void        yackmode (uint8_t mode);
-void        yackinhibit (uint8_t mode);
-void        yackerror (void);
-void        yacktoggle(byte flag);
-byte        yackflag(byte flag);
-void        yackbeat(void);
-void        yackmessage(byte function, byte msgnr);
-void        yacksave (void);
-byte        yackctrlkey(byte mode);
-void        yackreset (void);
-word        yackuser (byte func, byte nr, word content);
-void        yacknumber(word n);
-word        yackwpm(void);
-void        yackplay(byte i);
-void        yackdelay(byte n);
-void        yackfarns(void);
-void        yackspeed (byte dir, byte mode);
+void yackinit(void);
+void yackchar(char c);
+void yackstring(const char *p);
+char yackiambic(byte ctrl);
+void yackpitch(uint8_t dir);
+void yacktune(void);
+void yackmode(uint8_t mode);
+void yackinhibit(uint8_t mode);
+void yackerror(void);
+void yacktoggle(byte flag);
+byte yackflag(byte flag);
+void yackbeat(void);
+void yackmessage(byte function, byte msgnr);
+void yacksave(void);
+byte yackctrlkey(byte mode);
+void yackreset(void);
+word yackuser(byte func, byte nr, word content);
+void yacknumber(word n);
+word yackwpm(void);
+void yackplay(byte i);
+void yackdelay(byte n);
+void yackfarns(void);
+void yackspeed(byte dir, byte mode);
 
 #ifdef POWERSAVE
-void        yackpower(byte n);
+void yackpower(byte n);
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
 
