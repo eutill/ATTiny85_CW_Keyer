@@ -21,27 +21,27 @@
 // User configurable settings
 // The following settings define the hardware connections to the keyer chip
 // Definition of where the keyer itself is connected 
-#define		KEYDDR			DDRB
-#define		KEYPORT			PORTB
-#define		KEYINP			PINB
-#define		DITPIN			3
-#define		DAHPIN			4
+#define		KEYDDR			DDRA
+#define		KEYPORT			PORTA
+#define		KEYINP			PINA
+#define		DITPIN			0
+#define		DAHPIN			1
 
 // Definition of where the transceiver keyer line is connected
 #define		OUTDDR			DDRB
 #define		OUTPORT			PORTB
-#define		OUTPIN			0
+#define		OUTPIN			1
 
 // Definition of where the sidetone output is connected (beware,
 // this is chip dependent and can not just be changed at will)
 #define		STDDR			DDRB
 #define		STPORT			PORTB
-#define		STPIN			1
+#define		STPIN			2		// OC0A
 
 // Definition of where the control button is connected
-#define		BTNDDR			DDRB
-#define		BTNPORT			PORTB
-#define		BTNINP			PINB
+#define		BTNDDR			DDRA
+#define		BTNPORT			PORTA
+#define		BTNINP			PINA
 #define		BTNPIN			2
 
 // The following defines the meaning of status bits in the yackflags and volflags 
@@ -76,17 +76,17 @@
 // beat
 
 // YACK heartbeat frequency (in ms)
-#define		YACKBEAT		5
+#define		YACKBEAT		5 //shouldn't be modified! Beat duration is set up in yackinit
 #define		YACKSECS(n)		(n*(1000/YACKBEAT)) // Beats in n seconds (off by 2x for 5ms heartbeat)
 #define		YACKMS(n)		(n/YACKBEAT) // Beats in n milliseconds
 
 // Power save mode
 #define     POWERSAVE       // Comment this line if no power save mode required
 #define     PSTIME          30 // 30 seconds until automatic powerdown
-#define     PWRWAKE         ((1<<PCINT3) | (1<<PCINT4) | (1<<PCINT2)) // Dit, Dah or Command wakes us up..
+#define     PWRWAKE         ((1<<PCINT2) | (1<<PCINT1) | (1<<PCINT0)) // bits for PCMSK0 reg. Dit, Dah or Command wakes us up
 
 // These values limit the speed that the keyer can be set to
-#define		MAXWPM			50  
+#define		MAXWPM			50
 #define		MINWPM			5
 #define		DEFWPM			15
 

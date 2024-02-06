@@ -228,8 +228,8 @@ void yackinit(void)
 
 #ifdef POWERSAVE
 
-	PCMSK |= PWRWAKE;    // Define which keys wake us up
-	GIMSK |= (1 << PCIE);  // Enable pin change interrupt
+	PCMSK0 |= PWRWAKE;    // Define which keys wake us up
+	GIMSK |= (1 << PCIE0);  // Enable pin change interrupt
 
 #endif
 
@@ -237,9 +237,9 @@ void yackinit(void)
 	// CK runs at 1MHz. Prescaling by 64 makes that 15625 Hz.
 	// Counting 78 cycles of that generates an overflow every 5ms
 
-	OCR1C = 78; // 77 counts per cycle
-	TCCR1 |= (1 << CTC1) | 0b00000111; // Clear Timer on match, prescale ck by 64
-	OCR1A = 1; // CTC mode does not create an overflow so we use OCR1A
+	OCR1AL = 78; // 77 counts per cycle
+	TCCR1B |= (1 << WGM12) | 0b00000011; // Clear Timer on match, prescale ck by 64
+	//OCR1A = 1; // CTC mode does not create an overflow so we use OCR1A
 
 }
 
@@ -434,7 +434,7 @@ void yackspeed(byte dir, byte mode)
 
 	}
 
-	volflags |= DIRTYFLAG; // Set the dirty flag	
+	volflags |= DIRTYFLAG; // Set the dirty flag
 
 	yackplay(DIT);
 	yackdelay(IEGLEN);	// Inter Element gap
@@ -457,9 +457,9 @@ void yackbeat(void)
  
  */
 {
-	while ((TIFR & (1 << OCF1A)) == 0)
+	while ((TIFR1 & (1 << OCF1A)) == 0)
 		; // Wait for Timeout
-	TIFR |= (1 << OCF1A);                // Reset output compare flag
+	TIFR1 |= (1 << OCF1A);                // Reset output compare flag
 }
 
 void yackpitch(byte dir)
@@ -484,7 +484,7 @@ void yackpitch(byte dir)
 	if (ctcvalue > MINCTC)
 		ctcvalue = MINCTC;
 
-	volflags |= DIRTYFLAG; // Set the dirty flag	
+	volflags |= DIRTYFLAG; // Set the dirty flag
 
 }
 
@@ -602,10 +602,10 @@ static void key(byte mode)
 		if (volflags & SIDETONE) // Are we generating a Sidetone?
 		{
 			OCR0A = ctcvalue;		// Then switch on the Sidetone generator
-			OCR0B = ctcvalue;
+			//OCR0B = ctcvalue;
 
 			// Activate CTC mode
-			TCCR0A |= (1 << COM0B0 | 1 << WGM01);
+			TCCR0A |= (1 << COM0A0 | 1 << WGM01);
 
 			// Configure prescaler
 			TCCR0B = 1 << CS01;

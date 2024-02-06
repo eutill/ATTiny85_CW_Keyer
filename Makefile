@@ -27,9 +27,9 @@
 #----------------------------------------------------------------------------
 
 
-MCU=attiny45
+MCU=attiny84a
 #MCU=attiny85
-ADMCU=t45
+ADMCU=t84a
 #ADMCU=t85
 
 
@@ -283,7 +283,7 @@ AVRDUDE_FLAGS = -p $(ADMCU) -c $(AVRDUDE_PROGRAMMER)
 AVRDUDE_FLAGS += $(AVRDUDE_NO_VERIFY)
 AVRDUDE_FLAGS += $(AVRDUDE_VERBOSE)
 AVRDUDE_FLAGS += $(AVRDUDE_ERASE_COUNTER)
-AVRDUDE_FLAGS += -P /dev/ACM0
+AVRDUDE_FLAGS += -P /dev/ttyACM0
 AVRDUDE_FLAGS += -b 19200
 
 
