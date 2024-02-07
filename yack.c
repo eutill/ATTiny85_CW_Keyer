@@ -280,11 +280,13 @@ void yackpower(byte n)
 		if (shdntimer++ == YACKSECS(PSTIME)) {
 			shdntimer = 0; // So we do not go to sleep right after waking up..
 
+			GIFR |= (1 << PCIF0); //Clear interrupt flag
 			set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-			sleep_bod_disable();
 			sleep_enable();
+			sleep_bod_disable();
 			sei();
 			sleep_cpu();
+			sleep_disable();
 			cli();
 
 			// There is no technical reason to CLI here but it avoids hitting the ISR every time
@@ -602,7 +604,6 @@ static void key(byte mode)
 		if (volflags & SIDETONE) // Are we generating a Sidetone?
 		{
 			OCR0A = ctcvalue;		// Then switch on the Sidetone generator
-			//OCR0B = ctcvalue;
 
 			// Activate CTC mode
 			TCCR0A |= (1 << COM0A0 | 1 << WGM01);

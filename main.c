@@ -271,7 +271,7 @@ void beacon(byte mode)
 	static word timer;
 	char c;
 
-	if (interval == 65000) // 
+	if (interval == 65000)
 		interval = yackuser(READ, 1, 0);
 
 	if (mode == RECORD) {
