@@ -280,11 +280,13 @@ void yackpower(byte n)
 		if (shdntimer++ == YACKSECS(PSTIME)) {
 			shdntimer = 0; // So we do not go to sleep right after waking up..
 
+			GIFR |= (1 << PCIF); //Clear interrupt flag
 			set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-			sleep_bod_disable();
 			sleep_enable();
+			sleep_bod_disable();
 			sei();
 			sleep_cpu();
+			sleep_disable();
 			cli();
 
 			// There is no technical reason to CLI here but it avoids hitting the ISR every time

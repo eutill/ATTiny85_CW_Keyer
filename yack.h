@@ -76,17 +76,17 @@
 // beat
 
 // YACK heartbeat frequency (in ms)
-#define		YACKBEAT		5
+#define		YACKBEAT		5 //shouldn't be modified! Beat duration is set up in yackinit
 #define		YACKSECS(n)		(n*(1000/YACKBEAT)) // Beats in n seconds (off by 2x for 5ms heartbeat)
 #define		YACKMS(n)		(n/YACKBEAT) // Beats in n milliseconds
 
 // Power save mode
 #define     POWERSAVE       // Comment this line if no power save mode required
-#define     PSTIME          30 // 30 seconds until automatic powerdown
-#define     PWRWAKE         ((1<<PCINT3) | (1<<PCINT4) | (1<<PCINT2)) // Dit, Dah or Command wakes us up..
+#define     PSTIME          5 // 5 seconds until automatic powerdown
+#define     PWRWAKE         ((1<<PCINT3) | (1<<PCINT4) | (1<<PCINT2)) // Dit, Dah or Command wakes us up
 
 // These values limit the speed that the keyer can be set to
-#define		MAXWPM			50  
+#define		MAXWPM			50
 #define		MINWPM			5
 #define		DEFWPM			15
 
