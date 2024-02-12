@@ -20,7 +20,13 @@
 
 // User configurable settings
 // The following settings define the hardware connections to the keyer chip
-// Definition of where the keyer itself is connected 
+
+// Choose microcontroller. Also select it in Makefile!
+#define		TINY85
+//#define		TINY84
+
+#ifdef		TINY85
+
 #define		KEYDDR			DDRB
 #define		KEYPORT			PORTB
 #define		KEYINP			PINB
@@ -43,6 +49,34 @@
 #define		BTNPORT			PORTB
 #define		BTNINP			PINB
 #define		BTNPIN			2
+
+#elif defined 	TINY84
+
+// Definition of where the keyer itself is connected
+#define		KEYDDR			DDRA
+#define		KEYPORT			PORTA
+#define		KEYINP			PINA
+#define		DITPIN			0
+#define		DAHPIN			1
+
+// Definition of where the transceiver keyer line is connected
+#define		OUTDDR			DDRB
+#define		OUTPORT			PORTB
+#define		OUTPIN			1
+
+// Definition of where the sidetone output is connected (beware,
+// this is chip dependent and can not just be changed at will)
+#define		STDDR			DDRB
+#define		STPORT			PORTB
+#define		STPIN			2		// OC0A
+
+// Definition of where the control button is connected
+#define		BTNDDR			DDRA
+#define		BTNPORT			PORTA
+#define		BTNINP			PINA
+#define		BTNPIN			2
+
+#endif
 
 // The following defines the meaning of status bits in the yackflags and volflags 
 // global variables
@@ -82,8 +116,13 @@
 
 // Power save mode
 #define     POWERSAVE       // Comment this line if no power save mode required
-#define     PSTIME          5 // 5 seconds until automatic powerdown
-#define     PWRWAKE         ((1<<PCINT3) | (1<<PCINT4) | (1<<PCINT2)) // Dit, Dah or Command wakes us up
+#define     PSTIME          30 // 30 seconds until automatic powerdown
+
+#ifdef TINY85
+#define   PWRWAKE ((1<<PCINT3) | (1<<PCINT4) | (1<<PCINT2)) // Dit, Dah or Command wakes us up
+#elif defined TINY84
+#define   PWRWAKE         ((1<<PCINT2) | (1<<PCINT1) | (1<<PCINT0)) // bits for PCMSK0 reg
+#endif
 
 // These values limit the speed that the keyer can be set to
 #define		MAXWPM			50

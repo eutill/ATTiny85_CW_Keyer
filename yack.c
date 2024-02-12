@@ -227,20 +227,27 @@ void yackinit(void)
 	yackinhibit(OFF);
 
 #ifdef POWERSAVE
-
+#ifdef TINY85
 	PCMSK |= PWRWAKE;    // Define which keys wake us up
 	GIMSK |= (1 << PCIE);  // Enable pin change interrupt
-
+#elif defined TINY84
+	PCMSK0 |= PWRWAKE;    // Define which keys wake us up
+	GIMSK |= (1 << PCIE0);  // Enable pin change interrupt
+#endif
 #endif
 
 	// Initialize timer1 to serve as the system heartbeat
 	// CK runs at 1MHz. Prescaling by 64 makes that 15625 Hz.
 	// Counting 78 cycles of that generates an overflow every 5ms
 
+#ifdef TINY85
 	OCR1C = 78; // 77 counts per cycle
 	TCCR1 |= (1 << CTC1) | 0b00000111; // Clear Timer on match, prescale ck by 64
 	OCR1A = 1; // CTC mode does not create an overflow so we use OCR1A
-
+#elif defined TINY84
+	OCR1AL = 78; // 77 counts per cycle
+	TCCR1B |= (1 << WGM12) | 0b00000011; // Clear Timer on match, prescale ck by 64
+#endif
 }
 
 #ifdef POWERSAVE
@@ -280,8 +287,13 @@ void yackpower(byte n)
 		if (shdntimer++ == YACKSECS(PSTIME)) {
 			shdntimer = 0; // So we do not go to sleep right after waking up..
 
+#ifdef TINY85
 			GIFR |= (1 << PCIF); //Clear interrupt flag
-			set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+#elif defined TINY84
+			GIFR |= (1 << PCIF0); //Clear interrupt flag
+#endif
+
+      set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 			sleep_enable();
 			sleep_bod_disable();
 			sei();
@@ -436,7 +448,7 @@ void yackspeed(byte dir, byte mode)
 
 	}
 
-	volflags |= DIRTYFLAG; // Set the dirty flag	
+	volflags |= DIRTYFLAG; // Set the dirty flag
 
 	yackplay(DIT);
 	yackdelay(IEGLEN);	// Inter Element gap
@@ -459,9 +471,15 @@ void yackbeat(void)
  
  */
 {
+#ifdef TINY85
 	while ((TIFR & (1 << OCF1A)) == 0)
+			; // Wait for Timeout
+		TIFR |= (1 << OCF1A);                // Reset output compare flag
+#elif defined TINY84
+	while ((TIFR1 & (1 << OCF1A)) == 0)
 		; // Wait for Timeout
-	TIFR |= (1 << OCF1A);                // Reset output compare flag
+	TIFR1 |= (1 << OCF1A);                // Reset output compare flag
+#endif
 }
 
 void yackpitch(byte dir)
@@ -486,7 +504,7 @@ void yackpitch(byte dir)
 	if (ctcvalue > MINCTC)
 		ctcvalue = MINCTC;
 
-	volflags |= DIRTYFLAG; // Set the dirty flag	
+	volflags |= DIRTYFLAG; // Set the dirty flag
 
 }
 
@@ -604,10 +622,16 @@ static void key(byte mode)
 		if (volflags & SIDETONE) // Are we generating a Sidetone?
 		{
 			OCR0A = ctcvalue;		// Then switch on the Sidetone generator
+#ifdef TINY85
 			OCR0B = ctcvalue;
 
 			// Activate CTC mode
 			TCCR0A |= (1 << COM0B0 | 1 << WGM01);
+#elif defined TINY84
+			// Activate CTC mode
+			TCCR0A |= (1 << COM0A0 | 1 << WGM01);
+#endif
+
 
 			// Configure prescaler
 			TCCR0B = 1 << CS01;
