@@ -1262,3 +1262,210 @@ char yackiambic(byte ctrl)
 
 }
 
+typedef enum {
+	STATE_IDLE,
+	STATE_DAHDIT_INIT,
+	STATE_DAHDIT,
+	STATE_IEG,
+	STATE_ICG,
+	STATE_IWG
+} iambicState_t;
+
+typedef enum {
+	SYMBOL_NONE,
+	SYMBOL_DIT,
+	SYMBOL_DAH,
+	SYMBOL_OPPOSITE
+} symbol_t;
+
+typedef enum {
+	PRESSED_NONE,
+	PRESSED_ONE,
+	PRESSED_BOTH,
+	PRESSED_DONT_CARE
+} pressedKeys_t;
+
+char yackiambic2(byte ctrl) {
+
+	static iambicState_t iambicState = STATE_IDLE;
+	static word timer = 0;
+	static word debounceTimer = 0;
+	static symbol_t currentSymbol;
+	static symbol_t nextSymbol;
+	static pressedKeys_t pressedKeys;
+	static byte repeatCycle = 0; //without waiting for next yackbeat
+	static byte keystate = 0; //debounced key state
+
+	if (timer) {timer--;}
+	if (debounceTimer) {debounceTimer--;}
+
+	if(debounceTimer == 0) { //debounce timer not active, read keylatch
+		keylatch();
+		if(keystate != (volflags & SQUEEZED)) { //keys changed state
+			debounceTimer = KEYDEBOUNCE / YACKBEAT;
+			keystate = volflags & SQUEEZED;
+		}
+		volflags &= ~(DITLATCH | DAHLATCH);
+	}
+
+
+	do {
+		repeatCycle = 0;
+
+		switch(iambicState) {
+
+		case STATE_IDLE:
+		case STATE_ICG:
+		case STATE_IWG:
+
+#ifdef POWERSAVE
+			yackpower(TRUE);
+#endif
+			if(keystate) { //some key has been pressed
+				if(keystate == DITLATCH) {
+					nextSymbol = SYMBOL_DIT;
+				} else if(keystate == DAHLATCH) {
+					nextSymbol = SYMBOL_DAH;
+				}
+				iambicState = STATE_DAHDIT_INIT;
+				repeatCycle = 1;
+			}
+
+			if((iambicState != STATE_IDLE) && (timer == 0)) {
+				if(iambicState == STATE_ICG) {
+					//TODO: char is done, send it
+					timer = (IWGLEN - ICGLEN) * wpmcnt;
+					iambicState = STATE_IWG;
+				} else if(iambicState == STATE_IWG) {
+					//TODO: word is done, send space
+					iambicState = STATE_IDLE;
+				}
+
+
+			}
+			break;
+
+
+		case STATE_DAHDIT_INIT:
+#ifdef POWERSAVE
+			yackpower(FALSE);
+#endif
+			currentSymbol = nextSymbol;
+			nextSymbol = SYMBOL_NONE;
+
+			switch(currentSymbol) {
+			case SYMBOL_DIT:
+				timer = DITLEN * wpmcnt;
+				break;
+			case SYMBOL_DAH:
+				timer = DAHLEN * wpmcnt;
+				break;
+			default:
+				iambicState = STATE_IDLE;
+				continue;
+				break;
+			}
+
+			if(keystate == SQUEEZED) {
+				pressedKeys = PRESSED_BOTH;
+				if((yackflags & MODE) == IAMBICB) {
+					nextSymbol = SYMBOL_OPPOSITE;
+				}
+			} else if(keystate == DITLATCH) {
+				pressedKeys = PRESSED_ONE;
+				if(currentSymbol != SYMBOL_DIT) {
+					nextSymbol = SYMBOL_DIT;
+					pressedKeys = PRESSED_DONT_CARE;
+				}
+			} else if(keystate == DAHLATCH) {
+				pressedKeys = PRESSED_ONE;
+				if(currentSymbol != SYMBOL_DAH) {
+					nextSymbol = SYMBOL_DAH;
+					pressedKeys = PRESSED_DONT_CARE;
+				}
+			} else {
+				pressedKeys = PRESSED_NONE;
+			}
+
+			key(DOWN);
+			iambicState = STATE_DAHDIT;
+			break;
+
+
+		case STATE_DAHDIT:
+		case STATE_IEG:
+			switch(pressedKeys) {
+			case PRESSED_BOTH:
+				if(keystate == 0) { //None pressed
+					pressedKeys = PRESSED_NONE;
+				} else if(keystate != SQUEEZED) { //One pressed
+					pressedKeys = PRESSED_ONE;
+				}
+				break;
+			case PRESSED_ONE:
+				if(keystate == SQUEEZED) { //Both pressed
+					nextSymbol = SYMBOL_OPPOSITE;
+					pressedKeys = PRESSED_DONT_CARE;
+				} else if(keystate == 0) { //None pressed
+					pressedKeys = PRESSED_NONE;
+				}
+				break;
+			case PRESSED_NONE:
+				if(keystate == SQUEEZED) {
+					nextSymbol = SYMBOL_OPPOSITE;
+					pressedKeys = PRESSED_DONT_CARE;
+				} else if(keystate == DITLATCH) {
+					nextSymbol = SYMBOL_DIT;
+					pressedKeys = PRESSED_DONT_CARE;
+				} else if(keystate == DAHLATCH) {
+					nextSymbol = SYMBOL_DAH;
+					pressedKeys = PRESSED_DONT_CARE;
+				}
+				break;
+			default:
+				break;
+			}
+
+			if(timer == 0) {
+				if(iambicState == STATE_DAHDIT) {
+					if(pressedKeys == PRESSED_BOTH) {
+						nextSymbol = SYMBOL_OPPOSITE;
+						pressedKeys = PRESSED_DONT_CARE;
+					}
+					key(UP);
+					timer = IEGLEN * wpmcnt;
+					iambicState = STATE_IEG;
+				} else { //STATE_IEG
+					if(pressedKeys == PRESSED_ONE) {
+						if(keystate == DITLATCH) {
+							nextSymbol = SYMBOL_DIT;
+						} else if(keystate == DAHLATCH) {
+							nextSymbol = SYMBOL_DAH;
+						} else { //shouldn't happen
+							nextSymbol = SYMBOL_NONE;
+						}
+					}
+					if(nextSymbol == SYMBOL_OPPOSITE) {
+						if(currentSymbol == SYMBOL_DIT) {
+							nextSymbol = SYMBOL_DAH;
+						} else {
+							nextSymbol = SYMBOL_DIT;
+						}
+					}
+
+					if(nextSymbol == SYMBOL_NONE) {
+						iambicState = STATE_IDLE;
+						timer = (ICGLEN - IEGLEN - 1) * wpmcnt;
+					} else {
+						iambicState = STATE_DAHDIT_INIT;
+						repeatCycle = 1;
+					}
+				}
+			}
+			break;
+		}
+	} while (repeatCycle);
+
+	return '\0';
+}
+

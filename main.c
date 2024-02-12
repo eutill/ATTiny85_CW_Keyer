@@ -529,7 +529,7 @@ int main(void)
 
 		yackbeat();
 		beacon(PLAY); // Play beacon if requested
-		yackiambic(OFF);
+		yackiambic2(OFF);
 
 	}
 

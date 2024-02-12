@@ -26,11 +26,11 @@
 # To rebuild project do "make clean" then "make all".
 #----------------------------------------------------------------------------
 
-MCU=attiny85
-ADMCU=t85
+#MCU=attiny85
+#ADMCU=t85
 
-#MCU=attiny84a
-#ADMCU=t84a
+MCU=attiny84a
+ADMCU=t84a
 
 
 

@@ -22,8 +22,8 @@
 // The following settings define the hardware connections to the keyer chip
 
 // Choose microcontroller. Also select it in Makefile!
-#define		TINY85
-//#define		TINY84
+//#define		TINY85
+#define		TINY84
 
 #ifdef		TINY85
 
@@ -114,6 +114,9 @@
 #define		YACKSECS(n)		(n*(1000/YACKBEAT)) // Beats in n seconds (off by 2x for 5ms heartbeat)
 #define		YACKMS(n)		(n/YACKBEAT) // Beats in n milliseconds
 
+// Morse keys' debounce time (in ms)
+#define		KEYDEBOUNCE		30
+
 // Power save mode
 #define     POWERSAVE       // Comment this line if no power save mode required
 #define     PSTIME          30 // 30 seconds until automatic powerdown
@@ -199,6 +202,7 @@ void yackinit(void);
 void yackchar(char c);
 void yackstring(const char *p);
 char yackiambic(byte ctrl);
+char yackiambic2(byte ctrl);
 void yackpitch(uint8_t dir);
 void yacktune(void);
 void yackmode(uint8_t mode);
