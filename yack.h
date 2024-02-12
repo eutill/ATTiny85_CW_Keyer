@@ -22,8 +22,8 @@
 // The following settings define the hardware connections to the keyer chip
 
 // Choose microcontroller. Also select it in Makefile!
-//#define		TINY85
-#define		TINY84
+#define		TINY85
+//#define		TINY84
 
 #ifdef		TINY85
 
@@ -92,8 +92,7 @@
 
 #define		IAMBICA			0b00000000  // IAMBIC A mode
 #define		IAMBICB			0b00000100  // IAMBIC B mode (default)
-#define		ULTIMATIC		0b00001000  // Ultimatic Mode
-#define		DAHPRIO			0b00001100  // Always give DAH priority
+// note: Ultimatic and dah-prio mode have been removed
 
 #define		FLAGDEFAULT		IAMBICB | TXKEY | SIDETONE
 
@@ -106,7 +105,7 @@
 #define		VSCOPY          0b00110000  // Copies of Sidetone and TX flags from yackflags
 
 // The following defines timing constants. In the default version the keyer is set to operate in
-// 10ms heartbeat intervals. If a higher resolution is required, this can be changed to a faster
+// 5ms heartbeat intervals. If a higher resolution is required, this can be changed to a faster
 // beat
 
 // YACK heartbeat frequency (in ms)

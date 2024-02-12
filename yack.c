@@ -47,11 +47,28 @@ static void keylatch(void);
 
 // Enumerations
 
-enum FSMSTATE {
-	IDLE,   //!< Not keyed, waiting for paddle
-	KEYED,  //!< Keyed, waiting for duration of current element
-	IEG     //!< In Inter-Element-Gap
-};
+typedef enum {
+	STATE_IDLE,
+	STATE_DAHDIT_INIT,
+	STATE_DAHDIT,
+	STATE_IEG,
+	STATE_ICG,
+	STATE_IWG
+} iambicState_t;
+
+typedef enum {
+	SYMBOL_NONE,
+	SYMBOL_DIT,
+	SYMBOL_DAH,
+	SYMBOL_OPPOSITE
+} symbol_t;
+
+typedef enum {
+	PRESSED_NONE,
+	PRESSED_ONE,
+	PRESSED_BOTH,
+	PRESSED_DONT_CARE
+} pressedKeys_t;
 
 // Module local definitions
 
@@ -1078,214 +1095,7 @@ void yackmessage(byte function, byte msgnr)
 
 }
 
-char yackiambic(byte ctrl)
-/*! 
- @brief     Finite state machine for the IAMBIC keyer
- 
- If IAMBIC (squeeze) keying is requested, this routine, which usually terminates
- immediately needs to be called in regular intervals of YACKBEAT milliseconds.
- 
- This can happen though an outside busy waiting loop or a counter mechanism.
- 
- @param ctrl    ON if the keyer should recognize when a word ends. OFF if not.
- @return        The character if one was recognized, /0 if not
- 
- */
-{
-
-	static enum FSMSTATE fsms = IDLE;	// FSM state indicator
-	static word timer;			// A countdown timer
-	static byte lastsymbol;		// The last symbol sent
-	static byte buffer = 0;		// A place to store a sent char
-	static byte bcntr = 0;		// Number of elements sent
-	static byte iwgflag = 0;	// Flag: Are we in interword gap?
-	static byte ultimem = 0;    // Buffer for last keying status
-	char retchar;		// The character to return to caller
-
-	// This routine is called every YACKBEAT ms. It starts with idle mode where
-	// the morse key is polled. Once a contact close is sensed, the TX key is 
-	// closed, the sidetone oscillator is fired up and the FSM progresses
-	// to the next state (KEYED). There it waits for the timer to expire, 
-	// afterwards progressing to IEG (Inter Element Gap).
-	// Once the IEG has completed, processing returns to the IDLE state.
-
-	// If the FSM remains in idle state long enough (one dash time), the
-	// character is assumed to be complete and a decoding is attempted. If
-	// succesful, the ascii code of the character is returned to the caller
-
-	// If the FSM remains in idle state for another 4 dot times (7 dot times 
-	// altogether), we assume that the word has ended. A space char
-	// is transmitted in this case.
-
-	if (timer)
-		timer--; // Count down
-
-	if (ctrl == OFF)
-		iwgflag = 0; // No space detection
-
-	switch (fsms) {
-
-	case IDLE:
-
-		keylatch();
-
-#ifdef POWERSAVE            
-
-		yackpower(TRUE); // OK to go to sleep when here.
-
-#endif            
-
-		// Handle latching logic for various keyer modes
-		switch (yackflags & MODE) {
-		case IAMBICA:
-		case IAMBICB:
-			// When the paddle keys are squeezed, we need to ensure that
-			// dots and dashes are alternating. To do that, whe delete
-			// any latched paddle of the same kind that we just sent.
-			// However, we only do this ONCE
-
-			volflags &= ~lastsymbol;
-			lastsymbol = 0;
-			break;
-
-		case ULTIMATIC:
-			// Ultimatic logic: The last paddle to be active will be repeated indefinitely
-			// In case the keyer is squeezed right out of idle mode, we just send a DAH
-			if ((volflags & SQUEEZED) == SQUEEZED) // Squeezed?
-			{
-				if (ultimem)
-					volflags &= ~ultimem; // Opposite symbol from last one
-				else
-					volflags &= ~DITLATCH; // Reset the DIT latch
-			} else {
-				ultimem = volflags & SQUEEZED; // Remember the last single key
-			}
-
-			break;
-
-		case DAHPRIO:
-			// If both paddles pressed, DAH is given priority
-			if ((volflags & SQUEEZED) == SQUEEZED) {
-				volflags &= ~DITLATCH; // Reset the DIT latch
-			}
-			break;
-		}
-
-		// The following handles the inter-character gap. When there are
-		// three (default) dot lengths of space after an element, the
-		// character is complete and can be returned to caller
-		if (timer == 0 && bcntr != 0) // Have we idled for 3 dots
-				// and is there something to decode?
-				{
-			buffer = buffer << 1;	  // Make space for the termination bit
-			buffer |= 1;			  // The 1 on the right signals end
-			buffer = buffer << (7 - bcntr); // Shift to left justify
-			retchar = morsechar(buffer); // Attempt decoding
-			buffer = bcntr = 0;			// Clear buffer
-			timer = (IWGLEN - ICGLEN) * wpmcnt;	// If 4 further dots of gap,
-			// this might be a Word gap.
-			iwgflag = 1; // Signal we are waiting for IWG
-			return (retchar);			// and return decoded char
-		}
-
-		// This handles the Inter-word gap. Already 3 dots have been
-		// waited for, if 4 more follow, interpret this as a word end
-		if (timer == 0 && iwgflag) // Have we idled for 4+3 = 7 dots?
-				{
-			iwgflag = 0;   // Clear Interword Gap flag
-			return (' ');  // And return a space
-		}
-
-		// Now evaluate the latch and determine what to send next
-		if (volflags & (DITLATCH | DAHLATCH)) // Anything in the latch?
-				{
-			iwgflag = 0; // No interword gap if dit or dah
-			bcntr++;	// Count that we will send something now
-			buffer = buffer << 1; // Make space for the new character
-
-			if (volflags & DITLATCH) // Is it a dit?
-			{
-				timer = DITLEN * wpmcnt; // Duration = one dot time
-				lastsymbol = DITLATCH; // Remember what we sent
-			} else // must be a DAH then..
-			{
-				timer = DAHLEN * wpmcnt; // Duration = one dash time
-				lastsymbol = DAHLATCH; // Remember
-				buffer |= 1; // set LSB to remember dash
-			}
-
-			key(DOWN); // Switch on the side tone and TX
-			volflags &= ~(DITLATCH | DAHLATCH); // Reset both latches
-
-			fsms = KEYED; // Change FSM state
-		}
-
-		break;
-
-	case KEYED:
-
-#ifdef POWERSAVE
-
-		yackpower(FALSE); // can not go to sleep when keyed
-
-#endif
-
-		if ((yackflags & MODE) == IAMBICB) // If we are in IAMBIC B mode
-			keylatch();                      // then latch here already
-
-		if (timer == 0) // Done with sounding our element?
-				{
-			key(UP); // Then cancel the side tone
-			timer = IEGLEN * wpmcnt; // One dot time for the gap
-			fsms = IEG; // Change FSM state
-		}
-
-		break;
-
-	case IEG:
-
-		keylatch();	// Latch any paddle movements (both A and B)
-
-		if (timer == 0) // End of gap reached?
-				{
-			fsms = IDLE; // Change FSM state
-			// The following timer determines what the IDLE state
-			// accepts as character. Anything longer than 2 dots as gap will be
-			// accepted for a character end.
-			timer = (ICGLEN - IEGLEN - 1) * wpmcnt;
-		}
-		break;
-
-	}
-
-	return '\0'; // Nothing to return if not returned in above routine
-
-}
-
-typedef enum {
-	STATE_IDLE,
-	STATE_DAHDIT_INIT,
-	STATE_DAHDIT,
-	STATE_IEG,
-	STATE_ICG,
-	STATE_IWG
-} iambicState_t;
-
-typedef enum {
-	SYMBOL_NONE,
-	SYMBOL_DIT,
-	SYMBOL_DAH,
-	SYMBOL_OPPOSITE
-} symbol_t;
-
-typedef enum {
-	PRESSED_NONE,
-	PRESSED_ONE,
-	PRESSED_BOTH,
-	PRESSED_DONT_CARE
-} pressedKeys_t;
-
-char yackiambic2(byte ctrl) {
+char yackiambic(byte ctrl) {
 
 	static iambicState_t iambicState = STATE_IDLE;
 	static word timer = 0;
@@ -1295,6 +1105,10 @@ char yackiambic2(byte ctrl) {
 	static pressedKeys_t pressedKeys;
 	static byte repeatCycle = 0; //without waiting for next yackbeat
 	static byte keystate = 0; //debounced key state
+	static byte buffer = 0;
+	static byte bufctr = 0;
+
+	char retchar = '\0';
 
 	if (timer) {timer--;}
 	if (debounceTimer) {debounceTimer--;}
@@ -1333,15 +1147,22 @@ char yackiambic2(byte ctrl) {
 
 			if((iambicState != STATE_IDLE) && (timer == 0)) {
 				if(iambicState == STATE_ICG) {
-					//TODO: char is done, send it
+					//char is done
+					buffer = buffer << 1;	  // Make space for the termination bit
+					buffer |= 1;			  // The 1 on the right signals end
+					buffer = buffer << (7 - bufctr); // Shift to left justify
+					retchar = morsechar(buffer); // Attempt decoding
+					buffer = bufctr = 0;			// Clear buffer
+
 					timer = (IWGLEN - ICGLEN) * wpmcnt;
 					iambicState = STATE_IWG;
 				} else if(iambicState == STATE_IWG) {
-					//TODO: word is done, send space
+					//word is done
+					if(ctrl == ON) {
+						retchar = ' ';
+					}
 					iambicState = STATE_IDLE;
 				}
-
-
 			}
 			break;
 
@@ -1353,15 +1174,19 @@ char yackiambic2(byte ctrl) {
 			currentSymbol = nextSymbol;
 			nextSymbol = SYMBOL_NONE;
 
+			buffer = buffer << 1;
+			bufctr++;
+
 			switch(currentSymbol) {
 			case SYMBOL_DIT:
 				timer = DITLEN * wpmcnt;
 				break;
 			case SYMBOL_DAH:
 				timer = DAHLEN * wpmcnt;
+				buffer |= 1;
 				break;
 			default:
-				iambicState = STATE_IDLE;
+				iambicState = STATE_IDLE; //this shouldn't happen
 				continue;
 				break;
 			}
@@ -1454,7 +1279,7 @@ char yackiambic2(byte ctrl) {
 					}
 
 					if(nextSymbol == SYMBOL_NONE) {
-						iambicState = STATE_IDLE;
+						iambicState = STATE_ICG;
 						timer = (ICGLEN - IEGLEN - 1) * wpmcnt;
 					} else {
 						iambicState = STATE_DAHDIT_INIT;
@@ -1466,6 +1291,6 @@ char yackiambic2(byte ctrl) {
 		}
 	} while (repeatCycle);
 
-	return '\0';
+	return retchar;
 }
 

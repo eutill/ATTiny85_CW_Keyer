@@ -59,7 +59,6 @@
 
 // Some texts in Flash used by the application
 const char txok[] PROGMEM = "R";
-const char vers[] PROGMEM = "V0.87";
 const char prgx[] PROGMEM = "#";// # decodes to prosign SK with no intercharacter gap
 const char imok[] PROGMEM = "73";
 
@@ -379,16 +378,6 @@ void commandmode(void)
 				c = TRUE;
 				break;
 
-			case 'L': // ULTIMATIC
-				yackmode(ULTIMATIC);
-				c = TRUE;
-				break;
-
-			case 'D': // DAHPRIO
-				yackmode(DAHPRIO);
-				c = TRUE;
-				break;
-
 			case 'X': // Paddle swapping
 				yacktoggle(PDLSWAP);
 				c = TRUE;
@@ -437,12 +426,6 @@ void commandmode(void)
 
 		switch (c) // Commands that can be used anytime
 		{
-
-		case 'V': // Version
-			yackstring(vers);
-			c = TRUE;
-			break;
-
 		case 'P': // Pitch
 			pitch();
 			c = TRUE;
@@ -529,7 +512,7 @@ int main(void)
 
 		yackbeat();
 		beacon(PLAY); // Play beacon if requested
-		yackiambic2(OFF);
+		yackiambic(OFF);
 
 	}
 
