@@ -119,11 +119,10 @@
 #define     PSTIME          30 // 30 seconds until automatic powerdown
 
 #ifdef TINY85
-#define PWRWAKE ((1<<PCINT3) | (1<<PCINT4) | (1<<PCINT2)) // Dit, Dah or Command wakes us up
+#define   PWRWAKE ((1<<PCINT3) | (1<<PCINT4) | (1<<PCINT2)) // Dit, Dah or Command wakes us up
 #elif defined TINY84
-#define     PWRWAKE         ((1<<PCINT2) | (1<<PCINT1) | (1<<PCINT0)) // bits for PCMSK0 reg
+#define   PWRWAKE         ((1<<PCINT2) | (1<<PCINT1) | (1<<PCINT0)) // bits for PCMSK0 reg
 #endif
-
 
 // These values limit the speed that the keyer can be set to
 #define		MAXWPM			50

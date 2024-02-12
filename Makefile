@@ -432,6 +432,7 @@ program: $(TARGET).hex
 eeprom: $(TARGET).eep
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_EEPROM)
 
+
 # Generate avr-gdb config/init file which does the following:
 #     define the reset signal, load the target file, connect to target, and set
 #     a breakpoint at main().

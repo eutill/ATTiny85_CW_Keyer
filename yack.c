@@ -286,12 +286,14 @@ void yackpower(byte n)
 	{
 		if (shdntimer++ == YACKSECS(PSTIME)) {
 			shdntimer = 0; // So we do not go to sleep right after waking up..
+
 #ifdef TINY85
 			GIFR |= (1 << PCIF); //Clear interrupt flag
 #elif defined TINY84
 			GIFR |= (1 << PCIF0); //Clear interrupt flag
 #endif
-			set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+
+      set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 			sleep_enable();
 			sleep_bod_disable();
 			sei();
