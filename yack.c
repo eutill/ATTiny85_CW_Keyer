@@ -148,7 +148,7 @@ const byte morse[] PROGMEM =
 	0b00110010,// ?
 	0b01010110,// .
 	0b10010100,// /
-	0b11101000,// ! (American Morse version, commonly used in ham circles)
+	0b11101000,// Ö or ! (American Morse version, commonly used in ham circles)
 	0b11001110,// ,
 	0b11100010,// :
 	0b10101010,// ;
@@ -160,24 +160,32 @@ const byte morse[] PROGMEM =
 	0b10000110,// - (Hyphen or single dash)
 	0b01101010,// @
 	0b00110110,// _ (Underline)
-	0b01010010,// Paragaraph break symbol
+	0b01010010,// | (Paragraph break symbol)
 	0b10001100,// = and BT
 	0b00010110,// SK
 	0b01010100,// + and AR
 	0b10001011,// BK
 	0b01000100,// AS
-	0b10101100,// KA (also ! in alternate Continental Morse)
+	0b10101100,// KA or CT
 	0b00010100,// VE
-	0b01011000// AA
+	0b01011000,// AA or Ä
+	0b10101110,// ! (Continental Morse version)
+	0b00111000,// Ü
+	0b00011001,// SZ or ß
+	0b11111000,// ch
+	0b01101100,// À or Å
+	0b01001100,// È
+	0b00100100,// É
+	0b11011100 // Ñ
 };
 
 // The special characters at the end of the above table can not be decoded
-// without a small table to define their content. # stands for SK, $ for AR
+// without a small table to define their content. # stands for SK, + for AR
 
 // To add new characters, add them in the code table above at the end and below
 // Do not forget to increase the legth of the array..
 
-const char spechar[24] PROGMEM = "?./!,:;~$^()-@_|=#+*%&<>";
+const char spechar[32] PROGMEM = "?./&,:;\"$'()-@_|=#+*%^<>![\\]`{}~";
 
 // Functions
 
@@ -310,7 +318,7 @@ void yackpower(byte n)
 			GIFR |= (1 << PCIF0); //Clear interrupt flag
 #endif
 
-      set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+			set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 			sleep_enable();
 			sleep_bod_disable();
 			sei();

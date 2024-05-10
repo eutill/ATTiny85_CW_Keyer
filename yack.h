@@ -82,27 +82,27 @@
 // global variables
 
 // Definition of the yackflags variable. These settings get stored in EEPROM when changed.
-#define		NOTUSED1		0b00000001  // Available
-#define     CONFLOCK		0b00000010  // Configuration locked down
-#define		MODE			0b00001100  // 2 bits to define keyer mode (see next section)
-#define		SIDETONE		0b00010000  // Set if the chip must produce a sidetone
-#define		TXKEY			0b00100000  // Set if the chip keys the transmitter
-#define		TXINV			0b01000000  // Set if TX key line is active low
-#define		PDLSWAP			0b10000000  // Set if DIT and DAH are swapped
+#define		UARTKEY			0b00000001	// Set if letters get sent through TX key line with bit-banged UART (TXKEY must be cleared)
+#define		CONFLOCK		0b00000010	// Configuration locked down
+#define		MODE			0b00001100	// 2 bits to define keyer mode (see next section)
+#define		SIDETONE		0b00010000	// Set if the chip must produce a sidetone
+#define		TXKEY			0b00100000	// Set if the chip keys the transmitter
+#define		TXINV			0b01000000	// Set if TX key line is active low
+#define		PDLSWAP			0b10000000	// Set if DIT and DAH are swapped
 
-#define		IAMBICA			0b00000000  // IAMBIC A mode
-#define		IAMBICB			0b00000100  // IAMBIC B mode (default)
+#define		IAMBICA			0b00000000	// IAMBIC A mode
+#define		IAMBICB			0b00000100	// IAMBIC B mode (default)
 // note: Ultimatic and dah-prio mode have been removed
 
-#define		FLAGDEFAULT		IAMBICB | TXKEY | SIDETONE
+#define		FLAGDEFAULT		IAMBICB | UARTKEY | SIDETONE
 
 // Definition of volflags variable. These flags do not get stored in EEPROM.
-#define		DITLATCH		0b00000001  // Set if DIT contact was closed
-#define     DAHLATCH		0b00000010  // Set if DAH contact was closed
-#define     SQUEEZED        0b00000011  // DIT and DAH = squeezed
-#define		DIRTYFLAG		0b00000100  // Set if cfg data was changed and needs storing
-#define     CKLATCH         0b00001000  // Set if the command key was pressed at some point
-#define		VSCOPY          0b00110000  // Copies of Sidetone and TX flags from yackflags
+#define		DITLATCH		0b00000001	// Set if DIT contact was closed
+#define		DAHLATCH		0b00000010	// Set if DAH contact was closed
+#define		SQUEEZED		0b00000011	// DIT and DAH = squeezed
+#define		DIRTYFLAG		0b00000100	// Set if cfg data was changed and needs storing
+#define		CKLATCH			0b00001000	// Set if the command key was pressed at some point
+#define		VSCOPY			0b00110000	// Copies of Sidetone and TX flags from yackflags
 
 // The following defines timing constants. In the default version the keyer is set to operate in
 // 5ms heartbeat intervals. If a higher resolution is required, this can be changed to a faster
@@ -117,8 +117,8 @@
 #define		KEYDEBOUNCE		30
 
 // Power save mode
-#define     POWERSAVE       // Comment this line if no power save mode required
-#define     PSTIME          30 // 30 seconds until automatic powerdown
+#define		POWERSAVE		// Comment this line if no power save mode required
+#define		PSTIME			30 // 30 seconds until automatic powerdown
 
 #ifdef TINY85
 #define   PWRWAKE ((1<<PCINT3) | (1<<PCINT4) | (1<<PCINT2)) // Dit, Dah or Command wakes us up
@@ -132,9 +132,9 @@
 #define		DEFWPM			15
 
 // Farnsworth parameters
-#define     FARNSWORTH      1
-#define     WPMSPEED        0
-#define     MAXFARN         255
+#define		FARNSWORTH		1
+#define		WPMSPEED		0
+#define		MAXFARN			255
 
 #define		WPMCALC(n)		((1200/YACKBEAT)/n) // Calculates number of beats in a dot 
 
@@ -145,9 +145,9 @@
 #define		IWGLEN			7	// Length of inter-word gap
 
 // Duration of various internal timings in seconds
-#define		TUNEDURATION	20  // Duration of tuning keydown (in seconds)
-#define     DEFTIMEOUT      5   // Default timeout 5 seconds
-#define     MACTIMEOUT      15  // Timeout after playing back a macro
+#define		TUNEDURATION	20	// Duration of tuning keydown (in seconds)
+#define		DEFTIMEOUT		5	// Default timeout 5 seconds
+#define		MACTIMEOUT		15	// Timeout after playing back a macro
 
 // The following defines various parameters in relation to the pitch of the sidetone
 
@@ -158,21 +158,21 @@
 // a given frequency
 
 // Default sidetone frequency
-#define		DEFFREQ			800     // Default sidetone frequency
-#define		MAXFREQ			1500    // Maximum frequency
-#define		MINFREQ			400     // Minimum frequenc
+#define		DEFFREQ			600		// Default sidetone frequency
+#define		MAXFREQ			1500	// Maximum frequency
+#define		MINFREQ			400		// Minimum frequency
 
 #define		MAXCTC			CTCVAL(MAXFREQ) // CTC values for the above three values
 #define		MINCTC			CTCVAL(MINFREQ) 
 #define		DEFCTC			CTCVAL(DEFFREQ)
 
 // The following are various definitions in use throughout the program
-#define		RBSIZE			100     // Size of each of the four EEPROM buffers
+#define		RBSIZE			100		// Size of each of the four EEPROM buffers
 
-#define		MAGPAT			0xA5    // If this number is found in EEPROM, content assumed valid
+#define		MAGPAT			0xA5	// If this number is found in EEPROM, content assumed valid
 
 #define		DIT				1
-#define		DAH             2
+#define		DAH				2
 
 #define		UP				1
 #define		DOWN			2
@@ -186,12 +186,12 @@
 #define		READ			1
 #define		WRITE			2
 
-#define		TRUE            1
-#define		FALSE           0
+#define		TRUE			1
+#define		FALSE			0
 
 // Generic functionality
-#define 	SETBIT(ADDRESS,BIT)     (ADDRESS |= (1<<BIT))
-#define 	CLEARBIT(ADDRESS,BIT)   (ADDRESS &= ~(1<<BIT))
+#define 	SETBIT(ADDRESS,BIT)		(ADDRESS |= (1<<BIT))
+#define 	CLEARBIT(ADDRESS,BIT)	(ADDRESS &= ~(1<<BIT))
 
 typedef uint8_t byte;
 typedef uint16_t word;

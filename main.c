@@ -49,6 +49,7 @@
 
 #include <avr/io.h> 
 #include <avr/pgmspace.h>
+#include <avr/interrupt.h>
 #include <util/delay.h>
 #include "yack.h"
 
@@ -487,6 +488,40 @@ void commandmode(void)
 
 }
 
+volatile uint16_t uartData = 0;
+
+void sendUART(char data) {
+	if(data == 0) return;
+	if(yackflag(UARTKEY) && !yackflag(TXKEY)) {
+		//at this point, we expect that the sidetone is off.
+		//For bit-banging UART TX, we are going to use Timer 0 which is normally used for sidetone
+		//9600 bps UART is used, with 8 data bits, no parity bits, and 1 stop bit.
+		TIMSK = (1 << OCIE0A); //Enable interrupt on Timer 0 compare match
+		TCCR0A = (1 << WGM01); //Clear timer on compare match
+		OCR0A = 103; //104 µs bit-length
+		uartData = (1 << 9); //stop bit
+		uartData |= (data << 1); //LSB of uartData is start bit
+		TCCR0B = (1 << CS00); //No prescaling, enable timer
+		sei();
+		while(uartData != 0);
+		cli();
+		TIMSK = 0;
+	}
+}
+
+ISR(TIM0_COMPA_vect) {
+	if(uartData & 0x01) {
+		OUTPORT &= ~(1 << OUTPIN); //negative logic
+	} else {
+		OUTPORT |= (1 << OUTPIN);
+	}
+	uartData = (uartData >> 1);
+	if(uartData == 0) { //finished transmitting, stop timer
+		TCCR0A = 0;
+		TCCR0B = 0;
+	}
+}
+
 int main(void)
 /*! 
  @brief     Trivial main routine
@@ -512,7 +547,7 @@ int main(void)
 
 		yackbeat();
 		beacon(PLAY); // Play beacon if requested
-		yackiambic(OFF);
+		sendUART(yackiambic(ON));
 
 	}
 
